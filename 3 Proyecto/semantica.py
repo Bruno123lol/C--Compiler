@@ -1,41 +1,26 @@
 from globalTypes import *
 from Parser import *
 
-location = 0
-
-# the stack for hash tables
 stack = [0]
-
-# the hash table
-
+location = 0
+scope = 0
 SymTableDictionary = {0:{'outputParam':[2,'int',False,'void',-1,0],'input':[0,'int',False,0,0,0],'output':[1,'void',False,1,0,0]}}
 
-# Procedure st_insert inserts line numbers and
-# memory locations into the symbol table
-# loc = memory location is inserted only the
-# first time, otherwise ignored
-location = 0
-def st_insert(name, tipo, arrType, arrSize, lineno, scope, funcScope=-1):
+
+def st_insert(name, tipo, isArray, arrSize, lineno, scope, funcScope=-1):
     global location
     if name in SymTableDictionary[scope]:
         if SymTableDictionary[scope][name][-1] != lineno:
             SymTableDictionary[scope][name].append(lineno)
     else:
         location += 1
-        SymTableDictionary[scope][name] = [location,tipo,arrType,arrSize, funcScope,lineno]
-    # print("Scope: ",scope)
-    # print(SymTableDictionary[scope])
+        SymTableDictionary[scope][name] = [location,tipo,isArray,arrSize, funcScope,lineno]
 
-
-# Function st_lookup returns the memory 
-# location of a variable or -1 if not found
 def st_lookup(name):
     for x in range(1,len(stack)+1):
         if name in SymTableDictionary[stack[(-x)]]:
             return stack[-x]
     return stack[-1]   
-
-scope = 0
 
 def table(tree, imprime = True):
     global scope
@@ -51,7 +36,6 @@ def table(tree, imprime = True):
                 shouldCheck = False
             elif(tree.decType == DecTipo.ARREGLO):
                 if tree.str == 'int':
-                    st_insert( tree.child[0].str,tree.str,False,-1,tree.lineno,scope)
                     if tree.child[1] != None:
                         st_insert(tree.child[0].str,tree.str,True,tree.child[1].val,tree.lineno,scope)
                     else:
@@ -62,7 +46,6 @@ def table(tree, imprime = True):
 
             elif(tree.decType == DecTipo.FUNCION):
                 if(stack[-1]!=0):
-                    # print("Scope number: ", stack[-1], " popped out")
                     stack.pop()
 
                 aux_tree = tree.child[1]
@@ -75,11 +58,8 @@ def table(tree, imprime = True):
 
                 scope+=1
                 scopesCreated += 1
-                # print("Scope number: ", scope, " created")
-                # print("Number of scopes created in this scope: ", scopesCreated)
                 stack.append(scope)
                 SymTableDictionary[scope] = {}
-                # print("Es de funcion")
             
         elif(tree.nType == TipoNodo.EXP):
             if(tree.expType == ExpTipo.IDENTIFIER):
@@ -93,42 +73,16 @@ def table(tree, imprime = True):
             if(tree.stmtType == StmtTipo.IF or tree.stmtType == StmtTipo.WHILE):
                 scope+=1
                 scopesCreated += 1
-                # print("Scope number: ", scope, " created")
-                # print("Number of scopes created in this scope: ", scopesCreated)
                 stack.append(scope)
                 SymTableDictionary[scope] = {}
-                # print("Es de stmt")
         if shouldCheck:
             for child in tree.child:
                 table(child)
         
         tree = tree.sibling
     for x in range(scopesCreated):
-        # print("Scope number: ", stack[-1], " popped out")
         if(stack[-1]!=0):
             stack.pop()
-
-def printSymTab():
-    print("Variable Name  Location    Line Numbers")
-    print("-------------  --------    ------------")
-    for scope in SymTableDictionary:
-        print("Scope number: ",scope)
-        for name in SymTableDictionary[scope]:
-            print("name :",name)
-            for i in range(len(SymTableDictionary[scope][name])):
-                print("info in symtable: ",SymTableDictionary[scope][name][i])
-
-# def buscarScope(name, lineno):
-# 	found = [] 
-# 	for scope in SymTableDictionary:
-# 		if name in SymTableDictionary[scope]:
-# 			found.append(scope) 
-# 	for i in found:
-#         for j in range(5,len(SymTableDictionary[i][name])):
-#             if lineno == SymTableDictionary[i][name][j]:
-#                 if SymTableDictionary[i][name][2]:
-#                     return True
-# 	return False
 
 def buscarScope(name, lineno):
     found = []
@@ -144,7 +98,6 @@ def buscarScope(name, lineno):
             pass
         pass
     return False
-
 
 def checkNode(tree):
     if tree != None:
@@ -162,7 +115,7 @@ def checkNode(tree):
             elif tree.expType in [ExpTipo.IDENTIFIER, ExpTipo.CONST]:
                 tree.type = OpTipo.INTEGER
             elif tree.expType == ExpTipo.ARREGLO:
-                if tree.sibling.type != OpTipo.INTEGER:
+                if tree.child[1].type != OpTipo.INTEGER:
                     print("Esto es void!!! u otra cosa xd", tree.lineno)
                 else:
                     tree.type = OpTipo.ARRAY
@@ -180,7 +133,7 @@ def checkNode(tree):
                         bandera = False
                         if aux_tree.type == OpTipo.ARRAY and aux_tree.child[0] != None:
                             aux_tree.type = OpTipo.INTEGER
-                            bandera = True
+
                         if SymTableDictionary[funcScope][name][2] == True:
                             if not buscarScope(aux_tree.str,aux_tree.lineno):
                                 print("Se esperaba un arreglo como parametro",aux_tree.lineno)
@@ -190,10 +143,8 @@ def checkNode(tree):
                             print("Se esperaba una variable de tipo int como parametro",aux_tree.lineno)
                         actualParam+=1
                         
-                        if bandera:
-                            aux_tree = aux_tree.sibling.sibling
-                        else: 
-                            aux_tree = aux_tree.sibling
+                       
+                        aux_tree = aux_tree.sibling
                         
                         if aux_tree==None or actualParam == paramNum:
                             break
@@ -215,6 +166,24 @@ def checkNode(tree):
                     if tree.child[0].type != OpTipo.INTEGER:
                         print("Return no regresa una variable de tipo entero")
         #checkNode(tree.sibling)
+
+def printSymTab():
+    title = "Scope number   Variable Name  Location Type   Is Array   Array Size  Function Scope Line Numbers"
+    lines = "-".center(len(title),"-")
+    for scope in SymTableDictionary:
+        print(title)
+        print(lines)
+        for name in SymTableDictionary[scope]:
+            print(str(scope).center(15), end ='')
+            print(name.center(12), end ="")
+            for i in range(len(SymTableDictionary[scope][name])):
+                if(i < 5):
+                    print(str(SymTableDictionary[scope][name][i]).center(12), end="")
+                else:
+                    print(str(SymTableDictionary[scope][name][i]).center(3), end="")
+            print(end="\n\n")
+    print(end="\n")
+
 
 def semantica(tree, imprime = True):
     table(tree,imprime)

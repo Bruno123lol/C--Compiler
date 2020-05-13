@@ -526,7 +526,7 @@ def var():
             if(t != None and p !=None):
                 p.child[0] = t
                 t = p
-                t.sibling = expression()
+                t.child[1] = expression()
             if(tokenType == TokenType.CLOSESQUAREB):
                 match(TokenType.CLOSESQUAREB)
             else:
@@ -612,5 +612,6 @@ def args():
             if(q != None and p !=None):
                 q = expression()
                 p.sibling = q
+                p = q
     return t
     
