@@ -1,0 +1,32 @@
+1.	program -> declaration {declaration}
+tengo una idea, en lugar de mandar a llamar a todas esas reglas, podemos hacer una simple
+en la que se pudan escoger después de que todo tiene que empezar de esa forma podemos solo ponerlos al inicio
+Y depsués se escoja por el token que les sigue
+2.	declaration -> var-declaration | fun-decalaration
+3.  var-declaration -> type-specifier ID [“[“NUM “]”]";"
+4.	type-specifier -> int | void
+5.	fun-decalaration -> type-specifier ID "("params")" compound-stmt
+6.	params -> param {"," param} | void
+7.	param -> type-specifier ID [“[“NUM “]”]
+8.	compound-stmt -> "{" local-declarations {statement}"}"
+9.	local-declarations -> {var-declaration}
+10.	statement -> expression-stmt | compound-stmt | selection-stmt | iteration-stmt | return-stmt
+11.	expression-stmt -> [expression] ";"
+12.	selection-stmt -> if "("expression")"statement [else statement]
+13.	iteration-stmt -> while "("expression")" statement
+14.	return-stmt -> return [expression]";"
+15.	expression -> var "=" expression | simple-expression /////////////////////////////////////////////ver aquí
+16.	var -> ID ["["expression"]"]
+17.	simple-expression -> additive-expression [relop additive-expression]
+18.	relop -> <= | < | > | >= | == |!=
+19.	additive-expression -> term {addop term}
+20.	addop -> +|-
+21.	term -> factor {mulop factor}
+22.	mulop -> *|/
+23.	factor -> "("expression")" | var | call | NUM
+24.	call -> ID "("args")"
+25.	args - [expression {"," expression}]
+
+Extras:
+type-specifier-id -> type-specifier ID
+type-specifier-id-num -> type-specifier [“[“NUM “]”]
