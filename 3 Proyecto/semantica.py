@@ -39,7 +39,6 @@ def st_dec_lookup(name, scopeB):
 #Función para recorrer el AST e insertar los identificadores en las ST correspondiente en el momento que se deba hacer
 def table(tree, imprime = True):
     global scope
-    numScopesCreated = 0 #contador para saber cuantos scopes fueron creados en esta rama del AST
     
     while tree != None:
         shouldCheckChilds = True #variable para saber cuando se requieren checar los hijos de la rama
@@ -95,10 +94,17 @@ def table(tree, imprime = True):
                 st_insert(tree.child[0].str,tree.str,False,numberOfParams,tree.lineno,stack[0],scope+1)
 
                 scope+=1 #aumentar el número de scopes
-                numScopesCreated += 1  #avisar que se está creando un scope
                 stack.append(scope) #agregar el scope al stack
                 SymTableDictionary[scope] = {} #añadir el scope al diccionario
-            
+                
+                for child in tree.child: #checar cada hijo
+                    table(child)
+                
+                if(stack[-1]!=0): #quitar del stack cuando se termine el scope
+                    stack.pop()
+                
+                shouldCheckChilds = False
+
         elif(tree.nType == TipoNodo.EXP): #si es una expresion
 
             if(tree.expType == ExpTipo.IDENTIFIER): #si es un identificador
@@ -115,19 +121,21 @@ def table(tree, imprime = True):
         
             if(tree.stmtType == StmtTipo.IF or tree.stmtType == StmtTipo.WHILE): #si es un if o un while
                 scope+=1 #aumentar el número de scopes
-                numScopesCreated += 1 #avisar que se está creando un scope
                 stack.append(scope) #agregar el scope al stack
                 SymTableDictionary[scope] = {} #añadir el scope al diccionario
-        
+                
+                for child in tree.child: #Checar cada hijo
+                    table(child)
+
+                if(stack[-1]!=0): #Quitar del stack cuando se termine el scope
+                    stack.pop()
+                shouldCheckChilds = False
+
         if shouldCheckChilds: #si se deben checar los hijos
             for child in tree.child:
                 table(child)
         
         tree = tree.sibling
-    
-    for x in range(numScopesCreated): #sacar cada scope creado
-        if(stack[-1]!=0):
-            stack.pop()
 
 #Función que ayuda encontrar la definición de una variable en la ST y devuelve TRue si esta es un arreglo y False en caso contrario
 #name es el identificador a buscar y lineno es el número de línea donde se encuentra
@@ -178,7 +186,7 @@ def checkNode(tree):
             if tree.stmtType == StmtTipo.IF or tree.stmtType == StmtTipo.WHILE: #si es un if o un while
         
                 if(tree.child[0].type != OpTipo.BOOLEAN): #si el hijo o el resultado no es booleano
-                    errorFunction(tree.lineno,"Error, está tratando de usar algún tipo de valor no booleano ",tree.str)
+                    errorFunction(tree.lineno,"Error, está tratando de usar algún tipo de valor no booleano ","")
         
             elif tree.stmtType == StmtTipo.CALL: #si es una llamada
                 funcScope = SymTableDictionary[0][tree.child[0].str][4] #scope de la funcion
@@ -196,13 +204,13 @@ def checkNode(tree):
                         if SymTableDictionary[funcScope][name][2] == True: #si se espera que el parametro sea un arreglo
         
                             if not isArray(aux_tree.str,aux_tree.lineno): #si no es arreglo la variable que se manda
-                                errorFunction(aux_tree.lineno,"Error, se esperaba un arreglo como parámetro",aux_tree.str)
+                                errorFunction(aux_tree.lineno,"Error, se esperaba un arreglo como parámetro",tree.child[0].str)
         
                         elif isArray(aux_tree.str,aux_tree.lineno): #si es arreglo la variable que se manda
-                            errorFunction(aux_tree.lineno,"Error, se esperaba una variable entera como parámetro",aux_tree.str)
+                            errorFunction(aux_tree.lineno,"Error, se esperaba una variable entera como parámetro",tree.child[0].str)
         
                         elif aux_tree.type != OpTipo.INTEGER: #si no es entera la variable
-                            errorFunction(tree.lineno,"Error, se esperaba una variable entera parámetro",tree.str)
+                            errorFunction(tree.lineno,"Error, se esperaba una variable entera como parámetro",tree.child[0].str)
         
                         actualParam+=1 #aumentar el contador de parámetros
                        
@@ -212,13 +220,13 @@ def checkNode(tree):
                             break
                     
                     if actualParam < paramNum or aux_tree != None: #si es menor el número de parámetros que se envían o si había más parámetros
-                        errorFunction(tree.lineno,"Error, el número de parámetros no coincide",tree.str)
+                        errorFunction(tree.lineno,"Error, el número de parámetros no coincide",tree.child[0].str)
                 
                 elif aux_tree == None and paramNum>0: #si no se envían parámetros y se esperaban más de 0
-                    errorFunction(tree.lineno,"Error, se esperaba uno o más parámetros",tree.str)
+                    errorFunction(tree.lineno,"Error, se esperaba uno o más parámetros",tree.child[0].str)
                 
                 elif aux_tree != None and paramNum<=0: #si se envían parámetros y no se esperaba ningúno
-                    errorFunction(tree.lineno,"Error, no se esperaba un parámetro",tree.str)
+                    errorFunction(tree.lineno,"Error, no se esperaba un parámetro",tree.child[0].str)
                 
                 if SymTableDictionary[0][tree.child[0].str][1] == "int": #si la función es de tipo int
                     tree.type = OpTipo.INTEGER
@@ -233,7 +241,7 @@ def checkNode(tree):
                 if tree.child[0] != None: #si está regresando algo
             
                     if tree.child[0].type != OpTipo.INTEGER: #si el valor que devuelve no es entero
-                        errorFunction(tree.lineno,"Error, está tratando de regresar algún tipo de valor no entero ",tree.str)
+                        errorFunction(tree.lineno,"Error, está tratando de regresar algún tipo de valor no entero ",str(tree.str))
 
 #Función para imprimir el diccionario de ST's
 def printSymTab():

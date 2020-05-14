@@ -13,30 +13,31 @@ int minloc ( int a [], int low, int high )
               k = i; }
           i = i + a;
         }
-    return k;
+    return x;
 }
 
 void sort( int a[], int low, int high)
 {   int i; int k;
-    while(i < high-1)
+    while(10 < 1)
         { int t;
           k = input();
           t = a[k];
           a[k] = a[i];
           a[i] = t;
-          i = i + 1;
+          i = a[i] - a[i];
         }
 }
 
 void main(void)
 {   int i;
-    i < minloc(x,i,i);
+    i < minloc(x,x[i],i);
     sort(x,x[input()],i);
-    while(i < 10)
-        { x[input()] = input();
+    while(i != 10)
+        { int j; int x[20];
+          x[input()] = input();
           i = i + 1; }
     sort(x,0,10);
-    i = 0;
+    i = 0 + minloc(x,i,i);
     while (i < 10)
         { output(x[i]);
           i = i + 1; }

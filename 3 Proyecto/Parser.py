@@ -391,7 +391,7 @@ def local_declarations():
                     match(TokenType.OPENSQUAREB, "Se esperaba un token [")
                     if(tokenType == TokenType.NUM):
                         p.child[1] = nuevoExpNodo(ExpTipo.CONST)
-                        p.child[1].str = tokenString
+                        p.child[1].val = tokenString
                         match(TokenType.NUM, "Se esperaba un número")
                     if(tokenType == TokenType.CLOSESQUAREB):
                         match(TokenType.CLOSESQUAREB, "Se esperaba un token ]")
