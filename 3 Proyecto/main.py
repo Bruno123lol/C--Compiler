@@ -9,4 +9,4 @@ posicion = 0 # posición del caracter actual del string
 # función para pasar los valores iniciales de las variables globales
 globales(programa, posicion, progLong)
 AST = parser(False)
-semantica(AST, True)
+semantica(AST, False)

@@ -30,15 +30,16 @@ void sort( int a[], int low, int high)
 
 void main(void)
 {   int i;
-    i < minloc(x,x[i],i);
+    i < minloc(i,x[i],i);
     sort(x,x[input()],i);
     while(i != 10)
         { int j; int x[20];
           x[input()] = input();
-          i = i + 1; }
+          i = i + sort(); }
     sort(x,0,10);
     i = 0 + minloc(x,i,i);
     while (i < 10)
-        { output(x[i]);
+        { a  = i * 2;
+          output(x[sort()]);
           i = i + 1; }
 }
