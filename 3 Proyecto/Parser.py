@@ -537,7 +537,7 @@ def simple_expression(idVar):
     #print("simple_expression")
     global tokenType, tokenString, lineno
     t = additive_expression(idVar)
-    if(tokenType in booleanOperators):
+    while(tokenType in booleanOperators):
         p = nuevoExpNodo(ExpTipo.OPERATION)
         p.op = tokenType
         p.str = tokenString
@@ -552,7 +552,7 @@ def additive_expression(idVar):
     #print("additive_expression")
     global tokenType, tokenString, lineno
     t = term(idVar)
-    if (tokenType == TokenType.PLUS or tokenType == TokenType.LESS):
+    while (tokenType == TokenType.PLUS or tokenType == TokenType.LESS):
         p = nuevoExpNodo(ExpTipo.OPERATION)
         p.op = tokenType
         p.str = tokenString
@@ -567,7 +567,7 @@ def term(idVar):
     #print("term")
     global tokenType, tokenString, lineno
     t = factor(idVar)
-    if (tokenType == TokenType.MULT or tokenType == TokenType.DIV):
+    while (tokenType == TokenType.MULT or tokenType == TokenType.DIV):
         p = nuevoExpNodo(ExpTipo.OPERATION)
         p.op = tokenType
         p.str = tokenString

@@ -1,45 +1,14 @@
+/*Blabka jidsnaindsfjjasdkas mcd. */
 
-/*este es otro comentario*/
-int x[10];
-/*este es un comentario*/
-int minloc ( int a [], int low, int high )
-{ int i; int x; int k;
-    k = low;
-    x = a[low];
-    i = low + 1;
-    while (i < high)
-        { if (a[i] < x)
-            { x = a[i];
-              k = i; }
-          i = i + a;
-        }
-    return x;
+int gcd(int u, int v){
+  if(v==0)
+    return u;
+  else return gcd(v,u-u/v*v);
+  /* u-u/v*v == u mod v*/
 }
 
-void sort( int a[], int low, int high)
-{   int i; int k;
-    while(10 < 1)
-        { int t;
-          k = input();
-          t = a[k];
-          a[k] = a[i];
-          a[i] = t;
-          i = a[i] - a[i];
-        }
-}
-
-void main(void)
-{   int i;
-    i < minloc(i,x[i],i);
-    sort(x,x[input()],i);
-    while(i != 10)
-        { int j; int x[20];
-          x[input()] = input();
-          i = i + sort(); }
-    sort(x,0,10);
-    i = 0 + minloc(x,i,i);
-    while (i < 10)
-        { a  = i * 2;
-          output(x[sort()]);
-          i = i + 1; }
+void main(void){
+  int x; int y;
+  x = input(); y = input();
+  output(gcd(x,y));
 }
