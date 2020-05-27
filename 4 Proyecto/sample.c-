@@ -1,6 +1,11 @@
 /*Blabka jidsnaindsfjjasdkas mcd. */
-
+int i[10];
+int x;
+int suma(int a, int b){
+  int j;
+}
+int c;
 void main(void){
-  int i[5];
+  int i[5]; int j;
   i[1] = 1;
 }

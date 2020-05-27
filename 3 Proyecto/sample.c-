@@ -1,14 +1,8 @@
 /*Blabka jidsnaindsfjjasdkas mcd. */
-
-int gcd(int u, int v){
-  if(v==0)
-    return u;
-  else return gcd(v,u-u/v*v);
-  /* u-u/v*v == u mod v*/
-}
+int i[10];
+int x;
 
 void main(void){
-  int x;  int y;
-    	x = input(); y = input();
-    	output(gcd(x,y));
+  int i[5]; int j;
+  i[1] = 1;
 }

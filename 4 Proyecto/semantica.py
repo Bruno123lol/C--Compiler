@@ -9,27 +9,45 @@ globalLocation = 0
 #Variable global para mantener el número del scope de las tablas de símbolos
 scope = 0
 #Diccionario de diccionarios para almacenar y controlar las tablas de símbolos 
-SymTableDictionary = {0:{'outputParam':[0,'int',False,'void',-1,0],'input':[0,'int',False,0,0,0],'output':[1,'void',False,1,0,0]}}
+SymTableDictionary = {0:{'outputParam':[0,'int',False,'void',-1,0,0],'input':[0,'int',False,0,0,0,0],'output':[0,'void',False,1,0,0,0]}}
 
 #Función para instertar los valores en la tabla correspondiente al scope actual
 #recibe como parametros todos los valores a insertar en la tabla y el scope donde se debe insertar
 def st_insert(name, tipo, isArray, arrSize, lineno, scope, funcScope=-1):
     global localLocation, globalLocation
+    nOfLocalDeclarations = 0
     if name in SymTableDictionary[scope]: #en caso de que ya se encuentre en la ST solo agregar la linea de uso
         if SymTableDictionary[scope][name][-1] != lineno:
             SymTableDictionary[scope][name].append(lineno)
     else:
+        loc = localLocation
+        if scope == 0:
+            loc = globalLocation
         if(funcScope!= -1):
             localLocation = 0
-            SymTableDictionary[scope][name] = [localLocation,tipo,isArray,arrSize, funcScope,lineno]
+            SymTableDictionary[scope][name] = [localLocation,tipo,isArray,arrSize, funcScope, nOfLocalDeclarations,lineno]
         elif(arrSize != -1):
-            SymTableDictionary[scope][name] = [globalLocation,tipo,isArray,arrSize, funcScope,lineno]
-            globalLocation += 4*int(arrSize)
+            SymTableDictionary[scope][name] = [loc,tipo,isArray,arrSize, funcScope, nOfLocalDeclarations,lineno]
+            if scope == 0:
+                globalLocation += 4*int(arrSize)
+            else:
+                localLocation += 4*int(arrSize)
         else:
-            SymTableDictionary[scope][name] = [localLocation,tipo,isArray,arrSize, funcScope,lineno]
-            localLocation += 4 #Aumentar la posición de memeoria en la que se va a encontrar el identificador
+            SymTableDictionary[scope][name] = [loc,tipo,isArray,arrSize, funcScope, nOfLocalDeclarations,lineno]
+            if scope == 0:
+                globalLocation += 4 #Aumentar la posición de memeoria en la que se va a encontrar el identificador
+            else:
+                localLocation += 4 #Aumentar la posición de memeoria en la que se va a encontrar el identificador
+            
+        if scope != 0:
+            for name in SymTableDictionary[0]:
+                if scope == SymTableDictionary[0][name][4]:
+                    if isArray:
+                        SymTableDictionary[0][name][5] = SymTableDictionary[0][name][5] + int(arrSize)
+                    else:
+                        SymTableDictionary[0][name][5] = SymTableDictionary[0][name][5] + 1
+                    break
         
-
 #función para buscar el identificador en las tablas de simbolos que se encuentren en el stack
 # recibe como parámetro el identificador a buscar y devuelve el stack donde se encontró
 def st_lookup(name):
@@ -45,6 +63,7 @@ def st_dec_lookup(name, scopeB):
         return True
     return False
 
+#funcion para obtener la ubicación en memoria de cualquier varibale
 def getLocation(name,linea):
     found = [] #arreglo de scopes dónde aparece la variable
     for scope in SymTableDictionary: 
@@ -52,10 +71,17 @@ def getLocation(name,linea):
             found.append(scope) #adjuntar el scope
 
     for i in found: #por cada scope buscar si es el scope correspondiente a la variable que se busca
-        for j in range(5,len(SymTableDictionary[i][name])):
+        for j in range(6,len(SymTableDictionary[i][name])):
             if lineno == SymTableDictionary[i][name][j]:
                 return SymTableDictionary[i][name][0], i #devolver el valor del atributo location
     return 0, 0
+
+#función para obtener el numero de parametros de una función yel numero de declaraciones locales 
+def getFuncInfo(name):
+    numParam = SymTableDictionary[0][name][3]
+    numLocalDec = SymTableDictionary[0][name][5]
+    return numParam, numLocalDec
+
 
 #Función que ayuda encontrar la definición de una variable en la ST y devuelve TRue si esta es un arreglo y False en caso contrario
 #name es el identificador a buscar y lineno es el número de línea donde se encuentra
@@ -66,7 +92,7 @@ def isArray(name, lineno):
             found.append(scope) #adjuntar el scope
 
     for i in found: #por cada scope buscar si es el scope correspondiente a la variable que se busca
-        for j in range(5,len(SymTableDictionary[i][name])):
+        for j in range(6,len(SymTableDictionary[i][name])):
             if lineno == SymTableDictionary[i][name][j]:
                 return SymTableDictionary[i][name][2] #devolver el valor del atributo isArray
             
@@ -77,19 +103,20 @@ def table(tree, imprime = True):
     global scope
     
     while tree != None:
+        
         shouldCheckChilds = True #variable para saber cuando se requieren checar los hijos de la rama
        
         if(tree.nType == TipoNodo.DEC): #si el nodo actual es una declaración
            
             if(tree.decType == DecTipo.VARIABLE): #si es una declaración de variable
                 
-                if st_dec_lookup(tree.child[0].str, scope): #si ya fue declarada anteriormente en el mismo scope
+                if st_dec_lookup(tree.child[0].str, stack[-1]): #si ya fue declarada anteriormente en el mismo scope
                     errorFunction(tree.lineno,"Error, está tratando de declarar una variable dos o más veces",tree.child[0].str)
                 
                 else:
                    
                     if tree.str == 'int': #si la variable es de tipo int
-                        st_insert( tree.child[0].str,tree.str,False,-1,tree.lineno,scope)
+                        st_insert( tree.child[0].str,tree.str,False,-1,tree.lineno,stack[-1])
                    
                     elif tree.str ==  'void': #si la variable se intenta asignar a un tipo void
                         errorFunction(tree.lineno,"Error, está tratando de declarar variables de tipo void ",tree.child[0].str)
@@ -97,17 +124,17 @@ def table(tree, imprime = True):
             
             elif(tree.decType == DecTipo.ARREGLO): #si es la declaración de un arreglo
             
-                if st_dec_lookup(tree.child[0].str, scope): #si ya fue declarada en el mismo scope acutal
+                if st_dec_lookup(tree.child[0].str, stack[-1]): #si ya fue declarada en el mismo scope acutal
                     errorFunction(tree.lineno,"Error, está tratando de declarar un arreglo dos o más veces",tree.child[0].str)
                 
                 else:  
                     if tree.str == 'int': #si el arreglo es de tipo int
                     
                         if tree.child[1] != None: #si no es la declaración de un parámtero
-                            st_insert(tree.child[0].str,tree.str,True,tree.child[1].val,tree.lineno,scope)
+                            st_insert(tree.child[0].str,tree.str,True,tree.child[1].val,tree.lineno,stack[-1])
                    
                         else: # si el arreglo es un parámetro
-                            st_insert(tree.child[0].str,tree.str,True,"void",tree.lineno,scope)
+                            st_insert(tree.child[0].str,tree.str,True,"void",tree.lineno,stack[-1])
                    
                     elif tree.str ==  'void': # si se intenta declarar un arreglo de tipo void
                         errorFunction(tree.linno,"Error no se pueden declarar arreglos de tipo void ",tree.child[0].str)
@@ -268,7 +295,8 @@ def checkNode(tree):
 def printSymTab():
     center = 15
     title = "Scope number".center(center)+"Variable Name".center(center)+"GLocation".center(center)+"Type".center(center)
-    title += "Is Array".center(center)+"Array Size".center(center)+"Function Scope".center(center+2)+"Line Numbers"
+    title += "Is Array".center(center)+"Array Size".center(center)+"Function Scope".center(center+2)
+    title += "N Locals".center(center)+"Line Numbers"
     lines = "-".center(len(title),"-")
     for scope in SymTableDictionary:
         
@@ -287,7 +315,7 @@ def printSymTab():
 
                 for i in range(len(SymTableDictionary[scope][name])):
 
-                    if(i < 5):
+                    if(i < 6):
                         print(str(SymTableDictionary[scope][name][i]).center(center), end="")
                     else:
                         print(str(SymTableDictionary[scope][name][i]).center(3), end="")

@@ -19,9 +19,22 @@ def cgen(tree):
                     f.write("\t\t.text\n")
                     f.write("\t\t.globl main\n")
                     f.write("main:")
-                else: 
+                else:
+                    numParams, numLocDec = getFuncInfo(tree.child[0].str)
                     f.write("\t\t.text\n")
                     f.write(tree.child[0].str+":")
+                    #push return addr
+                    f.write("sw $ra, 0($sp)\n")
+                    f.write("\t\taddiu $sp, $sp, -4\n")
+                    #push control link
+                    f.write("\t\tsw $fp, 0($sp)\n")
+                    f.write("\t\taddiu $sp, $sp, -4\n")
+                    #set the frame pointer
+                    z = numParams*4 + 8
+                    f.write("\t\taddiu  $fp, $fp, "+str(z)+"\n")
+                    #push space for locals
+                    z = numLocDec*4
+                    f.write("\t\taddiu $sp, $sp, "+str(z)+"\n")
                 pass
         elif(tree.nType == TipoNodo.EXP): #si es una expresion
 
