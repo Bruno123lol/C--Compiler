@@ -1,0 +1,9 @@
+    .data
+	.align 2
+_x: .space 4
+	.data
+	.align 2
+_y: .space 40
+
+li $a0, 1
+sw $t0, x

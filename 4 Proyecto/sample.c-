@@ -1,0 +1,6 @@
+/*Blabka jidsnaindsfjjasdkas mcd. */
+
+void main(void){
+  int i[5];
+  i[1] = 1;
+}
