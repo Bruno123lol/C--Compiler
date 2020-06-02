@@ -9,7 +9,7 @@ globalLocation = 0
 #Variable global para mantener el número del scope de las tablas de símbolos
 scope = 0
 #Diccionario de diccionarios para almacenar y controlar las tablas de símbolos 
-SymTableDictionary = {0:{'outputParam':[0,'int',False,'void',-1,0,0],'input':[0,'int',False,0,0,0,0],'output':[0,'void',False,1,0,0,0]}}
+SymTableDictionary = {0:{'outputParam':[0,'int',False,'void',-1,0,0],'input':[0,'int',False,0,0,0],'output':[0,'void',False,1,0,0]}}
 
 #Función para instertar los valores en la tabla correspondiente al scope actual
 #recibe como parametros todos los valores a insertar en la tabla y el scope donde se debe insertar
@@ -26,24 +26,21 @@ def st_insert(name, tipo, isArray, arrSize, lineno, scope, funcScope=-1):
         if(funcScope!= -1):
             localLocation = 0
             SymTableDictionary[scope][name] = [localLocation,tipo,isArray,arrSize, funcScope, nOfLocalDeclarations,lineno]
-        elif(arrSize != -1):
-            SymTableDictionary[scope][name] = [loc,tipo,isArray,arrSize, funcScope, nOfLocalDeclarations,lineno]
-            if scope == 0:
-                globalLocation += 4*int(arrSize)
-            else:
-                localLocation += 4*int(arrSize)
+        elif(arrSize != -1 and arrSize!='void'):
+            SymTableDictionary[scope][name] = [globalLocation,tipo,isArray,arrSize, funcScope, nOfLocalDeclarations,lineno]
+            globalLocation += 4*int(arrSize)
         else:
             SymTableDictionary[scope][name] = [loc,tipo,isArray,arrSize, funcScope, nOfLocalDeclarations,lineno]
             if scope == 0:
                 globalLocation += 4 #Aumentar la posición de memeoria en la que se va a encontrar el identificador
             else:
                 localLocation += 4 #Aumentar la posición de memeoria en la que se va a encontrar el identificador
-            
         if scope != 0:
             for name in SymTableDictionary[0]:
                 if scope == SymTableDictionary[0][name][4]:
-                    if isArray:
-                        SymTableDictionary[0][name][5] = SymTableDictionary[0][name][5] + int(arrSize)
+                    if isArray and arrSize!='void':
+                        # SymTableDictionary[0][name][5] = SymTableDictionary[0][name][5] + int(arrSize)
+                        pass
                     else:
                         SymTableDictionary[0][name][5] = SymTableDictionary[0][name][5] + 1
                     break
@@ -72,16 +69,26 @@ def getLocation(name,linea):
 
     for i in found: #por cada scope buscar si es el scope correspondiente a la variable que se busca
         for j in range(6,len(SymTableDictionary[i][name])):
-            if lineno == SymTableDictionary[i][name][j]:
+            if linea == SymTableDictionary[i][name][j]:
                 return SymTableDictionary[i][name][0], i #devolver el valor del atributo location
     return 0, 0
+
+#funcion para cambiar la ubicación de memoria de un parametro en específico
+def changeParamLocation(funcName, paramPosition, paramLocation):
+    funcScope = SymTableDictionary[0][funcName][4]
+    i = 0
+    for name in SymTableDictionary[funcScope]:
+        if(i == paramPosition):
+            SymTableDictionary[funcScope][name][0] = paramLocation
+            break
+        i += 1
+    pass
 
 #función para obtener el numero de parametros de una función yel numero de declaraciones locales 
 def getFuncInfo(name):
     numParam = SymTableDictionary[0][name][3]
     numLocalDec = SymTableDictionary[0][name][5]
     return numParam, numLocalDec
-
 
 #Función que ayuda encontrar la definición de una variable en la ST y devuelve TRue si esta es un arreglo y False en caso contrario
 #name es el identificador a buscar y lineno es el número de línea donde se encuentra
@@ -253,7 +260,9 @@ def checkNode(tree):
         
                             if not isArray(aux_tree.str,aux_tree.lineno): #si no es arreglo la variable que se manda
                                 errorFunction(aux_tree.lineno,"Error, se esperaba un arreglo como parámetro",tree.child[0].str)
-        
+                            else:
+                                _, argScope = getLocation(aux_tree.str,aux_tree.lineno)
+                                SymTableDictionary[funcScope][name][0] = SymTableDictionary[argScope][aux_tree.str][0]
                         elif isArray(aux_tree.str,aux_tree.lineno): #si es arreglo la variable que se manda
                             errorFunction(aux_tree.lineno,"Error, se esperaba una variable entera como parámetro",tree.child[0].str)
         
