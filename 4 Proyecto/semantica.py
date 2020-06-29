@@ -73,23 +73,6 @@ def getLocation(name,linea):
                 return SymTableDictionary[i][name][0], i #devolver el valor del atributo location
     return 0, 0
 
-#funcion para cambiar la ubicación de memoria de un parametro en específico
-def changeParamLocation(funcName, paramPosition, paramLocation):
-    funcScope = SymTableDictionary[0][funcName][4]
-    i = 0
-    for name in SymTableDictionary[funcScope]:
-        if(i == paramPosition):
-            SymTableDictionary[funcScope][name][0] = paramLocation
-            break
-        i += 1
-    pass
-
-#función para obtener el numero de parametros de una función yel numero de declaraciones locales 
-def getFuncInfo(name):
-    numParam = SymTableDictionary[0][name][3]
-    numLocalDec = SymTableDictionary[0][name][5]
-    return numParam, numLocalDec
-
 #Función que ayuda encontrar la definición de una variable en la ST y devuelve TRue si esta es un arreglo y False en caso contrario
 #name es el identificador a buscar y lineno es el número de línea donde se encuentra
 def isArray(name, lineno):
